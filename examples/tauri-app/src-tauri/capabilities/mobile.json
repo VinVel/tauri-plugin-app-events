@@ -1,8 +1,0 @@
-{
-  "$schema": "../gen/schemas/mobile-schema.json",
-  "identifier": "mobile",
-  "description": "enables the default permissions",
-  "windows": ["main"],
-  "permissions": ["app-events:default"],
-  "platforms": ["android", "iOS"]
-}
