@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: true
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install Rust toolchain and Android target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install JavaScript dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build JavaScript guest bindings
+        run: bun run build
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-36" \
+            "build-tools;36.0.0" \
+            "ndk;27.1.12297006"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.1.12297006" >> "$GITHUB_ENV"
+          echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.1.12297006" >> "$GITHUB_ENV"
+
+      - name: Prepare Tauri Android API
+        run: cargo check --target aarch64-linux-android
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build Android plugin
+        run: gradle -p android assembleDebug
+
+  ios:
+    name: iOS
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install Rust toolchain and iOS simulator target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios-sim
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install JavaScript dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build JavaScript guest bindings
+        run: bun run build
+
+      - name: Prepare Tauri iOS API
+        run: cargo check --target aarch64-apple-ios-sim
+
+      - name: Build iOS plugin
+        working-directory: ios
+        run: |
+          xcodebuild \
+            -scheme tauri-plugin-app-events \
+            -destination 'generic/platform=iOS Simulator' \
+            -sdk iphonesimulator \
+            -derivedDataPath .build/xcode \
+            build
