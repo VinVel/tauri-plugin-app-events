@@ -1,7 +1,7 @@
 #[cfg(mobile)]
 use tauri::{
-    plugin::{Builder, TauriPlugin},
     Manager, Runtime,
+    plugin::{Builder, TauriPlugin},
 };
 
 #[cfg(mobile)]

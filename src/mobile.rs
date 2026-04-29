@@ -1,8 +1,8 @@
 use serde::de::DeserializeOwned;
 use tauri::{
+    AppHandle, Runtime,
     ipc::Channel,
     plugin::{PluginApi, PluginHandle},
-    AppHandle, Runtime,
 };
 
 use crate::models::EventHandler;
