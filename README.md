@@ -22,11 +22,14 @@ For desktop platforms, please use [@tauri-apps/api/event](https://v2.tauri.app/r
 
 Install the `app-events` plugin to get started.
 
-1. Run the following command in the `src-tauri` folder to add the plugin to the project’s dependencies in `Cargo.toml`:
+1. Add the Rust plugin as a local path dependency in your app's `src-tauri/Cargo.toml`:
 
-   ```shell
-   cargo add tauri-plugin-app-events@0.2 --target 'cfg(any(target_os = "android", target_os = "ios"))'
+   ```toml
+   [target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
+   tauri-plugin-app-events = { path = "../plugins/tauri-plugin-app-events" }
    ```
+
+   Adjust the path so it points from your app's `src-tauri` directory to this plugin directory.
 
 1. Modify `lib.rs` to initialize the plugin:
 
@@ -59,56 +62,73 @@ Install the `app-events` plugin to get started.
     }
    ```
 
-1. If you want to support key event listeners on the Android platform, you'll need to modify the `MainActivity.kt` file located at `src-tauri/gen/android/app/src/main/java/com/tauri/dev/MainActivity.kt`. The content should be updated as follows:
-
-   ```kotlin
-   package com.tauri.dev
-
-   import android.view.KeyEvent
-   import android.webkit.WebView
-
-   class MainActivity : TauriActivity() {
-     private lateinit var wv: WebView
-
-     override fun onWebViewCreate(webView: WebView) {
-       wv = webView
-     }
-
-     private val keyEventMap = mapOf(
-       KeyEvent.KEYCODE_BACK to "back",
-       KeyEvent.KEYCODE_MENU to "menu",
-       KeyEvent.KEYCODE_SEARCH to "search",
-       KeyEvent.KEYCODE_VOLUME_DOWN to "volume_down",
-       KeyEvent.KEYCODE_VOLUME_UP to "volume_up"
-     )
-
-     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-       val jsCallbackName = keyEventMap[keyCode]
-       wv.evaluateJavascript(
-         """
-           try {
-             window.__tauri_android_on_${if (jsCallbackName != null) "${jsCallbackName}_" else ""}key_down__(${if (jsCallbackName != null) "" else keyCode})
-           } catch (_) {
-             true
-           }
-       """.trimIndent()
-       ) { result ->
-         run {
-           if (result != "false") {
-             super.onKeyDown(keyCode, event)
-           }
-         }
-       }
-       return true
-     }
-   }
-   ```
-
-1. Install the JavaScript Guest bindings using your preferred JavaScript package manager:
+1. Build the JavaScript guest bindings from the plugin directory:
 
    ```shell
-   pnpm add tauri-plugin-app-events-api@0.2
+   bun run build
    ```
+
+1. Install the JavaScript guest bindings as a local path dependency in your app:
+
+   ```shell
+   bun add ./plugins/tauri-plugin-app-events
+   ```
+
+   Adjust the path so it points from your app's frontend package directory to this plugin directory. The package name remains `tauri-plugin-app-events-api`.
+
+### Optional Android Hardware Key Bridge
+
+Back navigation does not need host app changes. Android system back and gesture back are handled by the plugin.
+
+Other Android hardware keys, such as menu, search, volume, or arbitrary key codes, are not exposed through Tauri's Android plugin lifecycle hooks. To use those optional APIs, add a host bridge in your generated `MainActivity.kt`:
+
+```kotlin
+package your.app.package
+
+import android.view.KeyEvent
+import android.webkit.WebView
+
+class MainActivity : TauriActivity() {
+  private var webView: WebView? = null
+
+  override fun onWebViewCreate(webView: WebView) {
+    this.webView = webView
+  }
+
+  private val keyEventMap = mapOf(
+    KeyEvent.KEYCODE_MENU to "menu",
+    KeyEvent.KEYCODE_SEARCH to "search",
+    KeyEvent.KEYCODE_VOLUME_DOWN to "volume_down",
+    KeyEvent.KEYCODE_VOLUME_UP to "volume_up"
+  )
+
+  override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+    val callbackName = keyEventMap[keyCode]
+    val script =
+      if (callbackName != null) {
+        "window.__tauri_android_on_${callbackName}_key_down__()"
+      } else {
+        "window.__tauri_android_on_key_down__($keyCode)"
+      }
+
+    webView?.evaluateJavascript(
+      """
+        try {
+          $script
+        } catch (_) {
+          true
+        }
+      """.trimIndent()
+    ) { result ->
+      if (result != "false") {
+        super.onKeyDown(keyCode, event)
+      }
+    }
+
+    return true
+  }
+}
+```
 
 ## Usage
 
@@ -118,12 +138,12 @@ Install the `app-events` plugin to get started.
 | ------------------- | :-----: | :-: |
 | onResume            |   ✅    | ✅  |
 | onPause             |   ✅    | ✅  |
-| onBackKeyDown       |   ✅    | ❌  |
-| onMenuKeyDown       |   ✅    | ❌  |
-| onSearchKeyDown     |   ✅    | ❌  |
-| onVolumeDownKeyDown |   ✅    | ❌  |
-| onVolumeUpKeyDown   |   ✅    | ❌  |
-| onKeyDown           |   ✅    | ❌  |
+| onBackKeyDown       |   ✅    | ✅  |
+| onMenuKeyDown       | Bridge  | ❌  |
+| onSearchKeyDown     | Bridge  | ❌  |
+| onVolumeDownKeyDown | Bridge  | ❌  |
+| onVolumeUpKeyDown   | Bridge  | ❌  |
+| onKeyDown           | Bridge  | ❌  |
 
 ### Import Apis
 
@@ -146,7 +166,11 @@ All listener APIs only support a single callback, so repeated calls will cause t
 
 Therefore, if you want to cancel the listener, you can pass an empty parameter in functions like `onResume()`.
 
-In `keydown event` listeners of Android, if the callback function returns `false`, the default handling logic will be prevented. If it returns any other value or doesn't return anything, the default handling logic will continue.
+Back navigation is implemented entirely inside this plugin. On Android, system back button presses and gesture back both emit `onBackKeyDown`. On iOS, a left-edge swipe gesture emits `onBackKeyDown`.
+
+When an Android `onBackKeyDown` listener is registered, the plugin consumes Android back presses and emits the event to JavaScript. When no listener is registered, the plugin preserves the default behavior: navigate back in the WebView when possible, otherwise let the Activity handle the back press.
+
+The menu, search, volume, and arbitrary key APIs only work when the optional Android hardware key bridge is installed in the host Activity. If those callbacks return `false`, the host bridge prevents the default Android key behavior. If they return any other value or no value, the default behavior continues.
 
 ### onResume
 
@@ -207,18 +231,17 @@ In `Rust`, refer to the instructions mentioned above in `onResume`.
 
 ### onBackKeyDown
 
-The event fires when the user presses the back button on Android.
+The event fires when the user presses the back button or uses gesture back on Android, or when the user performs a left-edge swipe on iOS.
 
 ```js
-onBackKeyDown(() => {
-  console.log("Back key triggered");
-  return false;
+onBackKeyDown((event) => {
+  console.log("Back navigation triggered", event.canGoBack);
 });
 ```
 
 ### onMenuKeyDown
 
-The event fires when the user presses the menu button on Android.
+Android host bridge only. The event fires when the user presses the menu button.
 
 ```js
 onMenuKeyDown(() => {
@@ -229,7 +252,7 @@ onMenuKeyDown(() => {
 
 ### onSearchKeyDown
 
-The event fires when the user presses the search button on Android.
+Android host bridge only. The event fires when the user presses the search button.
 
 ```js
 onSearchKeyDown(() => {
@@ -240,7 +263,7 @@ onSearchKeyDown(() => {
 
 ### onVolumeDownKeyDown
 
-The event fires when the user presses the volume down button on Android.
+Android host bridge only. The event fires when the user presses the volume down button.
 
 ```js
 onVolumeDownKeyDown(() => {
@@ -251,7 +274,7 @@ onVolumeDownKeyDown(() => {
 
 ### onVolumeUpKeyDown
 
-The event fires when the user presses the volume up button on Android.
+Android host bridge only. The event fires when the user presses the volume up button.
 
 ```js
 onVolumeUpKeyDown(() => {
@@ -262,7 +285,7 @@ onVolumeUpKeyDown(() => {
 
 ### onKeyDown
 
-If you want to listen for the events of pressing other buttons, you can use `onKeyDown`. Note that this does not include the aforementioned button events.
+Android host bridge only. Use this for key codes that do not have a dedicated helper.
 
 ```js
 onKeyDown((keyCode) => {
@@ -270,7 +293,5 @@ onKeyDown((keyCode) => {
   return false;
 });
 ```
-
-Regarding `keyCode`, you can refer to the [Android documentation](https://developer.android.com/reference/android/view/KeyEvent#constants_1).
 
 ## [Permission description](./permissions/autogenerated/reference.md)

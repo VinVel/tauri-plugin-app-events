@@ -1,7 +1,14 @@
+/*
+ * Copyright (c) 2024 wtto00
+ * Copyright (c) 2026 VinVel
+ * SPDX-License-Identifier: MIT
+ */
+
 import OSLog
 import SwiftRs
 import Tauri
 import UIKit
+import WebKit
 
 private let log = OSLog(subsystem: "tauri-plugin-app-events", category: "plugin")
 
@@ -9,7 +16,9 @@ private final class SetEventHandlerArgs: Decodable {
   let handler: Channel
 }
 
-final class AppEventsPlugin: Plugin {
+final class AppEventsPlugin: Plugin, UIGestureRecognizerDelegate {
+  private var webview: WKWebView? = nil
+  private var backGestureRecognizer: UIScreenEdgePanGestureRecognizer? = nil
   private var resumeChannel: Channel? = nil
   private var pauseChannel: Channel? = nil
 
@@ -31,7 +40,32 @@ final class AppEventsPlugin: Plugin {
   }
 
   deinit {
+    if let recognizer = backGestureRecognizer {
+      webview?.removeGestureRecognizer(recognizer)
+    }
     NotificationCenter.default.removeObserver(self)
+  }
+
+  override func load(webview: WKWebView) {
+    self.webview = webview
+
+    if let recognizer = backGestureRecognizer {
+      webview.removeGestureRecognizer(recognizer)
+    }
+
+    let recognizer = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleBackGesture))
+    recognizer.edges = .left
+    recognizer.cancelsTouchesInView = false
+    recognizer.delegate = self
+    webview.addGestureRecognizer(recognizer)
+    backGestureRecognizer = recognizer
+  }
+
+  func gestureRecognizer(
+    _ gestureRecognizer: UIGestureRecognizer,
+    shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+  ) -> Bool {
+    return true
   }
 
   @objc
@@ -48,6 +82,18 @@ final class AppEventsPlugin: Plugin {
     let event = JSObject()
     trigger("pause", data: event)
     pauseChannel?.send(event)
+  }
+
+  @objc
+  private func handleBackGesture(_ recognizer: UIScreenEdgePanGestureRecognizer) {
+    guard recognizer.state == .ended else {
+      return
+    }
+
+    os_log(.debug, log: log, "Back gesture")
+    let event = JSObject()
+    event["canGoBack"] = webview?.canGoBack ?? false
+    trigger("back-key-down", data: event)
   }
 
   @objc public func setResumeHandler(_ invoke: Invoke) throws {
