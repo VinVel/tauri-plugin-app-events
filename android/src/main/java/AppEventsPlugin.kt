@@ -1,4 +1,4 @@
-package wang.tato.tauri_plugin_app_events
+package net.velcore.tauri_plugin_app_events
 
 import android.app.Activity
 import app.tauri.Logger

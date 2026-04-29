@@ -2,6 +2,10 @@
 
 A plugin for [tauri@v2](https://v2.tauri.app/zh-cn/) to listen some events on iOS and Android.
 
+## Fork Notice
+
+This repository is a fork of the original MIT-licensed `tauri-plugin-app-events` project. The original copyright notice is retained in [LICENSE](./LICENSE).
+
 ## Platform Supported
 
 | Platform | Supported |

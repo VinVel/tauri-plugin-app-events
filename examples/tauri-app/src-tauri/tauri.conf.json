@@ -1,7 +1,7 @@
 {
   "productName": "tauri-app",
   "version": "0.2.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "net.velcore.tauri-plugin-app-events.example",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "beforeBuildCommand": "pnpm build",
@@ -32,9 +32,6 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ],
-    "iOS": {
-      "developmentTeam": "tato wang (G4GF3SN6QT)"
-    }
+    ]
   }
 }

@@ -17,7 +17,7 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
 ) -> crate::Result<AppEvents<R>> {
     #[cfg(target_os = "android")]
     let handle =
-        api.register_android_plugin("wang.tato.tauri_plugin_app_events", "AppEventsPlugin")?;
+        api.register_android_plugin("net.velcore.tauri_plugin_app_events", "AppEventsPlugin")?;
     #[cfg(target_os = "ios")]
     let handle = api.register_ios_plugin(init_plugin_app_events)?;
     Ok(AppEvents(handle))

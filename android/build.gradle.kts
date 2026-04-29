@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "wang.tato.tauri_plugin_app_events"
+    namespace = "net.velcore.tauri_plugin_app_events"
     compileSdk = 34
 
     defaultConfig {

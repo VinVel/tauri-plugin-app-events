@@ -1,4 +1,4 @@
-package wang.tato.tauri_plugin_app_events
+package net.velcore.tauri_plugin_app_events
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("wang.tato.tauri_plugin_app_events", appContext.packageName)
+        assertEquals("net.velcore.tauri_plugin_app_events", appContext.packageName)
     }
 }
