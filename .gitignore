@@ -13,6 +13,14 @@ yarn.lock
 Cargo.lock
 node_modules/
 
+.android-user-home/
+.android-user-home-ci-test/
+.android-user-home-local/
+.gradle-user-home/
+.gradle-user-home-ci-test/
+.gradle-user-home-local/
+.kotlin-daemon*/
+
 dist-js
 dist
 

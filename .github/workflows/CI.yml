@@ -27,9 +27,16 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Install Rust toolchain and Android target
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: 1.93.1
           targets: aarch64-linux-android
+
+      - name: Verify Android Rust target
+        run: |
+          rustc --version
+          rustup target add aarch64-linux-android
+          rustup target list --installed | grep '^aarch64-linux-android$'
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -68,9 +75,11 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.14.3
 
       - name: Build Android plugin
-        run: gradle -p android assembleDebug
+        run: gradle -p android assembleDebug --stacktrace
 
   ios:
     name: iOS
@@ -82,9 +91,16 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Install Rust toolchain and iOS simulator target
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: 1.93.1
           targets: aarch64-apple-ios-sim
+
+      - name: Verify iOS Rust target
+        run: |
+          rustc --version
+          rustup target add aarch64-apple-ios-sim
+          rustup target list --installed | grep '^aarch64-apple-ios-sim$'
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2

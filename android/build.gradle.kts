@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "net.velcore.tauri_plugin_app_events"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 21

@@ -91,7 +91,7 @@ final class AppEventsPlugin: Plugin, UIGestureRecognizerDelegate {
     }
 
     os_log(.debug, log: log, "Back gesture")
-    let event = JSObject()
+    var event = JSObject()
     event["canGoBack"] = webview?.canGoBack ?? false
     trigger("back-key-down", data: event)
   }
