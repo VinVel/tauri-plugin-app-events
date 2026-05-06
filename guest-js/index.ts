@@ -61,7 +61,9 @@ function backKeyDownCallback(event: { payload: BackNavigationEvent }) {
 }
 
 /** Android and iOS */
-export async function onBackKeyDown(callback?: (event: BackNavigationEvent) => void) {
+export async function onBackKeyDown(
+  callback?: (event: BackNavigationEvent) => void,
+) {
   if (!callback) {
     _backKeyDownCallback = undefined;
     const listener = await _backKeyDownListener;
@@ -106,6 +108,8 @@ export function onVolumeUpKeyDown(callback: KeyDownCallback = () => {}) {
 
 window.__tauri_android_on_key_down__ = (_keyCode: number) => {};
 /** Android host bridge only */
-export function onKeyDown(callback: KeyDownCodeCallback = (_keyCode: number) => {}) {
+export function onKeyDown(
+  callback: KeyDownCodeCallback = (_keyCode: number) => {},
+) {
   window.__tauri_android_on_key_down__ = callback;
 }
