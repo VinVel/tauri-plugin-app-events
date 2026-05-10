@@ -1,12 +1,11 @@
 [package]
 name = "tauri-plugin-app-events"
-version = "0.2.0"
+version = "0.3.0"
 authors = [ "VinVel <dev+tauri-plugin-app-events@velcore.net>" ]
 description = "A plugin for tauri@v2 to listen some events on iOS and Android."
 license = "MIT"
 repository = "https://github.com/VinVel/tauri-plugin-app-events.git"
 edition = "2024"
-rust-version = "1.93.1"
 exclude = ["/dist-js", "/guest-js", "/node_modules"]
 links = "tauri-plugin-app-events"
 
