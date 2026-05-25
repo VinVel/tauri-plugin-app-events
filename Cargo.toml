@@ -9,6 +9,9 @@ edition = "2024"
 exclude = ["/dist-js", "/guest-js", "/node_modules"]
 links = "tauri-plugin-app-events"
 
+[lints]
+workspace = true
+
 [dependencies]
 tauri = { workspace = true }
 serde = { workspace = true }
