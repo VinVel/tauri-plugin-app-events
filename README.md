@@ -65,13 +65,13 @@ Install the `app-events` plugin to get started.
 1. Build the JavaScript guest bindings from the plugin directory:
 
    ```shell
-   bun run build
+   pnpm --filter tauri-plugin-app-events-api build
    ```
 
 1. Install the JavaScript guest bindings as a local path dependency in your app:
 
    ```shell
-   bun add ./plugins/tauri-plugin-app-events
+   pnpm add tauri-plugin-app-events-api@workspace:*
    ```
 
    Adjust the path so it points from your app's frontend package directory to this plugin directory. The package name remains `tauri-plugin-app-events-api`.

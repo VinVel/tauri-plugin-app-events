@@ -18,7 +18,7 @@
   "scripts": {
     "dev": "rollup -c --watch",
     "build": "rollup -c",
-    "pretest": "bun run build",
+    "pretest": "pnpm run build",
     "format": "cargo fmt --all"
   },
   "keywords": [
@@ -44,6 +44,5 @@
     "rollup": "catalog:",
     "tslib": "catalog:",
     "typescript": "catalog:"
-  },
-  "packageManager": "bun@1.3.13"
+  }
 }
