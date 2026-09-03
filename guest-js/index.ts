@@ -15,8 +15,7 @@ import type { PluginListener } from "@tauri-apps/api/core";
 export type KeyDownCallback = (() => boolean) | (() => void);
 
 export type KeyDownCodeCallback =
-  | ((keyCode: number) => boolean)
-  | ((keyCode: number) => void);
+  ((keyCode: number) => boolean) | ((keyCode: number) => void);
 
 export interface BackNavigationEvent {
   canGoBack: boolean;
